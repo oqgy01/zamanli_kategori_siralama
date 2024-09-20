@@ -42,6 +42,7 @@ from pathlib import Path
 import re
 import http.client
 import json
+import gc
 warnings.filterwarnings("ignore")
 pd.options.mode.chained_assignment = None
 
@@ -426,7 +427,7 @@ df = pd.read_excel("Kategori Sıralama.xlsx")
 conn = http.client.HTTPSConnection("siparis.haydigiy.com")
 
 
-for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="API İstekleri Gönderiliyor"):
+for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="İç Giyim Kategorisi Sıralanıyor"):
 
     category_id = row['Kategori ID']
     display_order = row['Numara']
@@ -468,8 +469,6 @@ for dosya in dosya_listesi:
         print(f"'{dosya}' dosyası bulunamadı.")
     except Exception as e:
         print(f"'{dosya}' dosyasını silerken bir hata oluştu: {str(e)}")
-
-print(Fore.GREEN + "İÇ GİYİM Ürünleri İç Giyim Tüm Ürünler Kategorisine Alındı ve Firma Bazlı Sıralandı")
 
 #endregion
 
@@ -1078,8 +1077,7 @@ birlesmis_veri.to_excel(yeni_dosya_adı, index=False)
 
 
 
-
-
+gc.collect()
 
 
 # Silmek istediğiniz dosyaların listesi
@@ -1138,7 +1136,7 @@ df = pd.read_excel("Kategori Sıralama.xlsx")
 conn = http.client.HTTPSConnection("siparis.haydigiy.com")
 
 
-for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="API İstekleri Gönderiliyor"):
+for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Tesettür Kategorisi Sıralanıyor 1"):
 
     category_id = row['Kategori ID']
     display_order = row['Numara']
@@ -1169,10 +1167,10 @@ for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="API İstekleri G�
 conn.close()
 
 
-
+gc.collect()
 
 # Silmek istediğiniz dosyaların listesi
-dosya_listesi = ['Kategori Sıralama.xlsx', 'yeni_birlesmis__veri.xlsx', 'birlesmis__veri.xlsx']
+dosya_listesi = ['Kategori Sıralama.xlsx']
 
 # Dosyaları silme işlemi
 for dosya in dosya_listesi:
@@ -1739,7 +1737,7 @@ birlesmis_veri.to_excel(yeni_dosya_adı, index=False)
 
 
 
-
+gc.collect()
 
 
 # Silmek istediğiniz dosyaların listesi
@@ -1796,7 +1794,7 @@ df = pd.read_excel("Kategori Sıralama.xlsx")
 conn = http.client.HTTPSConnection("siparis.haydigiy.com")
 
 
-for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="API İstekleri Gönderiliyor"):
+for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Tesettür Kategorisi Sıralanıyor 2"):
 
     category_id = row['Kategori ID']
     display_order = row['Numara']
@@ -1828,7 +1826,7 @@ conn.close()
 
 
 # Silmek istediğiniz dosyaların listesi
-dosya_listesi = ['Kategori Sıralama.xlsx', 'yeni_birlesmis__veri.xlsx', 'birlesmis__veri.xlsx']
+dosya_listesi = ['Kategori Sıralama.xlsx']
 
 # Dosyaları silme işlemi
 for dosya in dosya_listesi:
@@ -2416,7 +2414,7 @@ birlesmis_veri.to_excel(yeni_dosya_adı, index=False)
 
 
 
-
+gc.collect()
 
 # Silmek istediğiniz dosyaların listesi
 dosya_listesi = ['yeni_birlesmis__veri.xlsx', 'birlesmis__veri.xlsx']
@@ -2473,7 +2471,7 @@ df = pd.read_excel("Kategori Sıralama.xlsx")
 conn = http.client.HTTPSConnection("siparis.haydigiy.com")
 
 
-for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="API İstekleri Gönderiliyor"):
+for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Tesettür Kategorisi Sıralanıyor 3"):
 
     category_id = row['Kategori ID']
     display_order = row['Numara']
@@ -2503,9 +2501,10 @@ conn.close()
 
 
 
+gc.collect()
 
 # Silmek istediğiniz dosyaların listesi
-dosya_listesi = ['Kategori Sıralama.xlsx', 'yeni_birlesmis__veri.xlsx', 'birlesmis__veri.xlsx']
+dosya_listesi = ['Kategori Sıralama.xlsx']
 
 # Dosyaları silme işlemi
 for dosya in dosya_listesi:
@@ -2518,6 +2517,7 @@ for dosya in dosya_listesi:
         print(f"'{dosya}' dosyasını silerken bir hata oluştu: {str(e)}")
 
 #endregion
+
 
 
 
@@ -2665,44 +2665,59 @@ df_filtered.to_excel('Öne Çıkanlar.xlsx', index=False)
 
 #region Satış Raporu Tarihini Düne Göre Ayarlama
 
-# ChromeDriver'ı en son sürümüyle otomatik olarak indirip kullan
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+# Excel dosyasının ismi ve konumu
+filename = "Satış Raporu.xlsx"
 
-login_url = "https://task.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
-driver.get(login_url)
+# Dosyanın indirilme tarihini kontrol eden fonksiyon
+def is_file_downloaded_today(file_path):
+    if os.path.exists(file_path):
+        # Dosyanın son değiştirilme tarihini al
+        file_modification_time = os.path.getmtime(file_path)
+        modification_date = datetime.fromtimestamp(file_modification_time).date()
+        # Bugünün tarihi ile karşılaştır
+        return modification_date == datetime.today().date()
+    return False
 
-email_input = driver.find_element("id", "EmailOrPhone")
-email_input.send_keys("mustafa_kod@haydigiy.com")
+# Eğer dosya bugün indirilmemişse Selenium işlemleri çalıştırılır
+if not is_file_downloaded_today(filename):
+    # ChromeDriver'ı en son sürümüyle otomatik olarak indirip kullan
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
-password_input = driver.find_element("id", "Password")
-password_input.send_keys("123456")
-password_input.send_keys(Keys.RETURN)
+    login_url = "https://task.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
+    driver.get(login_url)
 
-# Belirttiğiniz sayfaya yönlendirme
-desired_page_url = "https://task.haydigiy.com/admin/exportorder/edit/149/"
-driver.get(desired_page_url)
+    # Giriş bilgilerini doldurma
+    email_input = driver.find_element("id", "EmailOrPhone")
+    email_input.send_keys("mustafa_kod@haydigiy.com")
 
-# Dünün tarihini al
-yesterday = datetime.now() - timedelta(days=1)
-formatted_date = yesterday.strftime("%d.%m.%Y")
+    password_input = driver.find_element("id", "Password")
+    password_input.send_keys("123456")
+    password_input.send_keys(Keys.RETURN)
 
-# Input alanını bulma ve tarih değerini giriş yapma
-end_date_input = driver.find_element("id", "EndDate")
-end_date_input.clear()  # Eğer mevcut bir değer varsa temizleyin
-end_date_input.send_keys(formatted_date)
+    # Belirttiğiniz sayfaya yönlendirme
+    desired_page_url = "https://task.haydigiy.com/admin/exportorder/edit/149/"
+    driver.get(desired_page_url)
 
-# Input alanını bulma ve tarih değerini giriş yapma
-end_date_input = driver.find_element("id", "StartDate")
-end_date_input.clear()  # Eğer mevcut bir değer varsa temizleyin
-end_date_input.send_keys(formatted_date)
+    # Dünün tarihini al
+    yesterday = datetime.now() - timedelta(days=1)
+    formatted_date = yesterday.strftime("%d.%m.%Y")
 
+    # EndDate alanını bulma ve tarih girişini yapma
+    end_date_input = driver.find_element("id", "EndDate")
+    end_date_input.clear()  # Eğer mevcut bir değer varsa temizleyin
+    end_date_input.send_keys(formatted_date)
 
-# Buttonu bulma ve tıklama
-save_button = driver.find_element("css selector", 'button.btn.btn-primary[name="save"]')
-save_button.click()
+    # StartDate alanını bulma ve tarih girişini yapma
+    start_date_input = driver.find_element("id", "StartDate")
+    start_date_input.clear()  # Eğer mevcut bir değer varsa temizleyin
+    start_date_input.send_keys(formatted_date)
 
-# Selenium işlemleri tamamlandıktan sonra tarayıcıyı kapatın
-driver.quit()
+    # Kaydet butonunu bulma ve tıklama
+    save_button = driver.find_element("css selector", 'button.btn.btn-primary[name="save"]')
+    save_button.click()
+
+    # Selenium işlemleri tamamlandıktan sonra tarayıcıyı kapatın
+    driver.quit()
 
 #endregion
 
@@ -2710,14 +2725,30 @@ driver.quit()
 
 # Excel dosyasının indirileceği URL
 url = "https://task.haydigiy.com/FaprikaOrderXls/Q7DC67/1/"
+filename = "Satış Raporu.xlsx"
 
-# Excel dosyasını indirmek ve adını "Satış Raporu.xlsx" olarak kaydetmek
-response = requests.get(url)
-with open("Satış Raporu.xlsx", "wb") as file:
-    file.write(response.content)
+# Dosyanın indirilme tarihini kontrol etmek için fonksiyon
+def is_file_downloaded_today(file_path):
+    if os.path.exists(file_path):
+        # Dosyanın son değiştirilme tarihini al
+        file_modification_time = os.path.getmtime(file_path)
+        modification_date = datetime.fromtimestamp(file_modification_time).date()
+        # Bugünün tarihi ile karşılaştır
+        return modification_date == datetime.today().date()
+    return False
 
-# Excel dosyasını okumak
-df = pd.read_excel("Satış Raporu.xlsx")
+# Dosya bugün indirilmemişse veya yoksa yeniden indir
+if not is_file_downloaded_today(filename):
+    # Eğer dosya varsa sil
+    if os.path.exists(filename):
+        os.remove(filename)
+    # Dosyayı indir ve kaydet
+    response = requests.get(url)
+    with open(filename, "wb") as file:
+        file.write(response.content)
+
+# Excel dosyasını oku
+df = pd.read_excel(filename)
 
 # Tutulacak sütunlar
 columns_to_keep = ["UrunAdi", "Adet", "ToplamFiyat"]
@@ -2725,8 +2756,8 @@ columns_to_keep = ["UrunAdi", "Adet", "ToplamFiyat"]
 # Diğer sütunları silmek
 df = df[columns_to_keep]
 
-# Düzenlenmiş dosyayı aynı adla kaydetmek
-df.to_excel("Satış Raporu.xlsx", index=False)
+# Düzenlenmiş dosyayı aynı adla kaydet
+df.to_excel(filename, index=False)
 
 #endregion
 
@@ -3064,19 +3095,6 @@ df['SayfaIsmi'] = "ÖNE ÇIKANLAR"
 
 # Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
 df.to_excel(dosya_adi, index=False)
-
-#endregion
-
-#region Satış Raporu Excel'ini Silme
-
-# Silinecek dosyanın adı
-dosya_adi = "Satış Raporu.xlsx"
-
-# Dosyanın mevcut olup olmadığını kontrol et ve sil
-if os.path.exists(dosya_adi):
-    os.remove(dosya_adi)
-else:
-    pass
 
 #endregion
 
@@ -4229,7 +4247,7 @@ df = pd.read_excel("Son Liste.xlsx")
 conn = http.client.HTTPSConnection("siparis.haydigiy.com")
 
 
-for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="API İstekleri Gönderiliyor"):
+for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Normal Kategoriler Sıralanıyor"):
 
     category_id = row['Kategori ID']
     display_order = row['Numara']
@@ -4261,6 +4279,8 @@ conn.close()
 
 #region Gereksiz Excel Dosyalarını Silme
 
+gc.collect()
+
 # Silinecek dosyaların isimlerini tanımla
 dosyalar = [
     "Stabil Ürün Listesi.xlsx",
@@ -4281,9 +4301,6 @@ for dosya in dosyalar:
         os.remove(dosya)
 
 #endregion
-
-
-
 
 #region Cloudflare Önbellek Temizleme
 
@@ -4585,5 +4602,4 @@ if __name__ == "__main__":
     fetch_and_send_links()
 
 #endregion
-
 
