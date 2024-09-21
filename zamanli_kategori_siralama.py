@@ -58,6 +58,7 @@ print(Fore.RED + "Zamanlı Kategori Sıralamaları")
 
 
 
+
 #region İÇ GİYİM Ürünlerini İç Giyim Tüm Ürünler Kategorisine Alma ve Firma Bazlı Sıralama (İlk Ürünler Emin Abinin Belirlediği Ürünler)
 
 # ChromeOptions oluştur
@@ -2521,6 +2522,8 @@ for dosya in dosya_listesi:
 
 
 
+
+
 #region Ürün Listesi İndirme ve Gereksiz Sütunları Silme
 
 def get_excel_data(url):
@@ -3098,6 +3101,494 @@ df.to_excel(dosya_adi, index=False)
 
 #endregion
 
+#region Stabil Ürün Listesi Excel'ini Çoğaltma ve Adını Öne Çıkanlar Serbest Alan Yapma ve Serbest Alan Olmayanları Satır Olarak Silme
+
+# Dosya adlarını tanımla
+orijinal_dosya = "Stabil Ürün Listesi.xlsx"
+kopya_dosya = "Öne Çıkanlar Serbest Alan.xlsx"
+
+# Dosyayı kopyala
+shutil.copy(orijinal_dosya, kopya_dosya)
+
+# Kopyalanan dosyayı oku
+df = pd.read_excel(kopya_dosya)
+
+# "Kategori" sütununda "Öne Çıkanlar Serbest Alan" ifadesini içerenleri tut, diğerlerini sil
+df_filtered = df[df['Kategori'].str.contains("Öne Çıkanlar Serbest Alan", na=False)]
+
+# Filtrelenmiş veriyi yeni dosyaya kaydet
+df_filtered.to_excel(kopya_dosya, index=False)
+
+#endregion  
+
+#region Öne Çıkanlar Serbest Alan Beden Durumunu Hesaplama
+
+# Veriyi Okuma
+df = pd.read_excel('Öne Çıkanlar Serbest Alan.xlsx')
+
+# "StokAdedi" Sütununda 0'dan Büyük Olan Değerlerin Adedi
+df['StokAdedi_GT_0'] = df['StokAdedi'].apply(lambda x: 1 if x > 0 else 0)
+stok_adedi_gt_0_adet = df.groupby('UrunAdi')['StokAdedi_GT_0'].sum().reset_index()
+
+# "UrunAdi" Sütunundaki Toplam Yenilenme Adedi
+toplam_yenilenme_adedi = df.groupby('UrunAdi').size().reset_index(name='ToplamYenilenmeAdedi')
+
+# Gereksiz Sütunları Silme
+df = df.drop(['StokAdedi_GT_0'], axis=1, errors='ignore')
+
+
+# Oranı Hesapla ve Yeni Sütunu Ekle
+df = pd.merge(df, stok_adedi_gt_0_adet, on='UrunAdi', how='left')
+df = pd.merge(df, toplam_yenilenme_adedi, on='UrunAdi', how='left')
+df['Beden Durumu'] = df['StokAdedi_GT_0'] / df['ToplamYenilenmeAdedi']
+
+# Gereksiz Sütunları Silme
+df = df.drop(['StokAdedi_GT_0', 'ToplamYenilenmeAdedi'], axis=1, errors='ignore')
+
+# Oranı 100 ile Çarpma
+df['Beden Durumu'] *= 100
+
+# Sonucu Mevcut Excel Dosyasının Üzerine Kaydetme
+df.to_excel('Öne Çıkanlar Serbest Alan.xlsx', index=False)
+
+#endregion
+
+#region Öne Çıkanlar Serbest Alan Beden Durumu %51'nin Altında Olanları Silme
+
+# Excel dosyasını oku
+birlesmis_veri = pd.read_excel("Öne Çıkanlar Serbest Alan.xlsx")
+
+# "Beden Durumu" sütunundaki değeri 50'den küçük olan satırları filtrele
+birlesmis_veri = birlesmis_veri[birlesmis_veri["Beden Durumu"] >= 51]
+
+# İstenmeyen sütunları sil
+silinecek_sutunlar = ["Beden Durumu", "StokAdedi"]
+birlesmis_veri = birlesmis_veri.drop(columns=silinecek_sutunlar, errors='ignore')
+
+# Tekrar eden satırları kaldır
+birlesmis_veri = birlesmis_veri.drop_duplicates()
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+birlesmis_veri.to_excel("Öne Çıkanlar Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Öne Çıkanlar Serbest Alan Excel'inde Sadece UrunAdi sütununu Tutma
+
+# Excel dosyasını okumak
+df = pd.read_excel("Öne Çıkanlar Serbest Alan.xlsx")
+
+# Tutulacak sütunlar
+columns_to_keep = ["UrunAdi"]
+
+# Diğer sütunları silmek
+df = df[columns_to_keep]
+
+# Düzenlenmiş dosyayı aynı adla kaydetmek
+df.to_excel("Öne Çıkanlar Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Öne Çıkanlar Serbest Alan Ürünlerinin Kategorideki Sırasını Bulma
+
+# Öne Çıkanlar Serbest Alan dosyasını oku
+df = pd.read_excel("Öne Çıkanlar Serbest Alan.xlsx")
+
+# Ürünlerin sıralanacağı bir liste oluştur
+urun_adlari = df["UrunAdi"].tolist()
+
+# Ürünleri aramak için ürün URL'sine GET isteği gönderme
+product_url = "https://task.haydigiy.com/one-cikanlar-serbest-alan/"
+response = requests.get(product_url)
+soup = BeautifulSoup(response.text, "html.parser")
+
+# Ürünleri bulma
+product_items = soup.find_all(class_="product-item")
+
+# Ürün numaralarını bulma
+urun_numaralari = []
+for urun_adi in urun_adlari:
+    for idx, item in enumerate(product_items):
+        if urun_adi in item.text:
+            urun_numaralari.append((urun_adi, idx + 1))  # 1 tabanlı indeks
+            break
+    else:
+        urun_numaralari.append((urun_adi, None))  # Bulunamazsa None
+
+# Excel'e geri yazma
+df['Numara'] = [numara for urun, numara in urun_numaralari]
+df.to_excel("Öne Çıkanlar Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Öne Çıkanlar Serbest Alan Ürünlerinin Sırasını Ayarlama
+
+# Excel dosyasını oku
+df = pd.read_excel("Öne Çıkanlar Serbest Alan.xlsx")
+
+# Numara sütununa göre küçükten büyüğe sıralama
+df_sorted = df.sort_values(by="Numara")
+
+# Numara sütununu güncelle
+df_sorted["Numara"] = range(-9999, -9999 + len(df_sorted), +1)
+
+# Güncellenmiş veriyi Excel dosyasına kaydet
+df_sorted.to_excel("Öne Çıkanlar Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Öne Çıkanlar Serbest Alan Sıralama Excel'inde Ürünlere SayfaIsmi Verme
+
+# Excel dosyasını oku
+dosya_adi = "Öne Çıkanlar Serbest Alan.xlsx"
+df = pd.read_excel(dosya_adi)
+
+# SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
+df['SayfaIsmi'] = "ÖNE ÇIKANLAR"
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+df.to_excel(dosya_adi, index=False)
+
+#endregion
+
+#region Öne Çıkanlar Serbest Alan ve Öne Çıkanlar Sıralama Verilerini Alt Alta Birleştirme
+
+# Excel dosyalarını oku
+df_serbest_alan = pd.read_excel("Öne Çıkanlar Serbest Alan.xlsx")
+df_siralama = pd.read_excel("Öne Çıkanlar Sıralama.xlsx")
+
+# İki DataFrame'i birleştir
+combined_df = pd.concat([df_siralama, df_serbest_alan], ignore_index=True)
+
+# Birleştirilmiş veriyi yeni bir Excel dosyasına kaydet
+combined_df.to_excel("Öne Çıkanlar Sıralama.xlsx", index=False)
+
+#endregion
+
+#region Stabil Ürün Listesi Excel'ini Çoğaltma ve Adını Sezon Sonu İndirimleri Yapma ve Sezon Sonu Olmayanları Satır Olarak Silme
+
+# Dosya adlarını tanımla
+orijinal_dosya = "Stabil Ürün Listesi.xlsx"
+kopya_dosya = "Sezon Sonu İndirimleri.xlsx"
+
+# Dosyayı kopyala
+shutil.copy(orijinal_dosya, kopya_dosya)
+
+# Kopyalanan dosyayı oku
+df = pd.read_excel(kopya_dosya)
+
+# "Kategori" sütununda "Dev İndirimler Serbest Alan" ifadesini içerenleri tut, diğerlerini sil
+df_filtered = df[df['Kategori'].str.contains("SEZON SONU İNDİRİMLERİ", na=False)]
+
+# Filtrelenmiş veriyi yeni dosyaya kaydet
+df_filtered.to_excel(kopya_dosya, index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimleri Liste Fiyatı Ayarlama
+
+# Veriyi Okuma
+df = pd.read_excel('Sezon Sonu İndirimleri.xlsx')
+
+# Alış Fiyatına Göre İşlemler ve Kategori Kontrolü
+def calculate_list_price(row):
+    alis_fiyati = row['AlisFiyati']
+    kategori = row['Kategori']
+
+    if 0 <= alis_fiyati <= 24.99:
+        result = alis_fiyati + 10
+    elif 25 <= alis_fiyati <= 39.99:
+        result = alis_fiyati + 13
+    elif 40 <= alis_fiyati <= 59.99:
+        result = alis_fiyati + 17
+    elif 60 <= alis_fiyati <= 200.99:
+        result = alis_fiyati * 1.30
+    elif alis_fiyati >= 201:
+        result = alis_fiyati * 1.25
+    else:
+        result = alis_fiyati
+
+    # KDV
+    if isinstance(kategori, str) and any(category in kategori for category in ["Parfüm", "Gözlük", "Saat"]):
+        result *= 1.20
+    else:
+        result *= 1.10
+
+    return result
+
+
+# Yeni Sütun Oluşturma
+df['ListeFiyati'] = df.apply(calculate_list_price, axis=1)
+
+# Sonucu Mevcut Excel Dosyasının Üzerine Kaydetme
+df.to_excel('Sezon Sonu İndirimleri.xlsx', index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimleri İndirim Oranı Hesaplama
+
+# Excel dosyasını oku
+birlesmis_veri = pd.read_excel("Sezon Sonu İndirimleri.xlsx")
+
+# "ListeFiyati" ve "SatisFiyati" sütunlarındaki verilerden işlem yap
+birlesmis_veri["İndirimOrani"] = (birlesmis_veri["ListeFiyati"] - birlesmis_veri["SatisFiyati"]) * 100 / birlesmis_veri["ListeFiyati"]
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+birlesmis_veri.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimlerini İndirim Oranına Göre Sıralama
+
+# Excel dosyasını oku
+df = pd.read_excel("Sezon Sonu İndirimleri.xlsx")
+
+# Numara sütununa göre küçükten büyüğe sıralama
+df_sorted = df.sort_values(by="İndirimOrani", ascending=False)
+
+# Güncellenmiş veriyi Excel dosyasına kaydet
+df_sorted.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimleri Excel'inde Sadece UrunAdi Sütununu Tutma
+
+# Excel dosyasını okumak
+df = pd.read_excel("Sezon Sonu İndirimleri.xlsx")
+
+# Tutulacak sütunlar
+columns_to_keep = ["UrunAdi"]
+
+# Diğer sütunları silmek
+df = df[columns_to_keep]
+
+# Düzenlenmiş dosyayı aynı adla kaydetmek
+df.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimleri Excel'inde Yenilenen Kaldırma
+
+# Excel dosyasını okuma (dosyanın adını ve yolunu kendi dosyanızla değiştirin)
+df = pd.read_excel('Sezon Sonu İndirimleri.xlsx')
+
+# Tekrarlayan satırları temizleme
+df_benzersiz = df.drop_duplicates()
+
+# Yeni haliyle Excel dosyasını kaydetme
+df_benzersiz.to_excel('Sezon Sonu İndirimleri.xlsx', index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimleri Excel'inde Sıralama Verme
+
+# Excel dosyasını okuma (dosyanın adını ve yolunu kendi dosyanızla değiştirin)
+df = pd.read_excel('Sezon Sonu İndirimleri.xlsx')
+
+# Toplam ürün sayısını alıyoruz (satır sayısı)
+urun_sayisi = len(df)
+
+# 'Numara' adında yeni bir sütun ekleyip, değerleri -1200, -1199, ... şeklinde dolduruyoruz
+df['Numara'] = range(-urun_sayisi, 0)
+
+# Yeni haliyle Excel dosyasını kaydetme
+df.to_excel('Sezon Sonu İndirimleri.xlsx', index=False)
+
+
+#endregion
+
+#region Sezon Sonu İndirimleri Excel'inde Ürünlere SayfaIsmi Verme
+
+# Excel dosyasını oku
+dosya_adi = "Sezon Sonu İndirimleri.xlsx"
+df = pd.read_excel(dosya_adi)
+
+# SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
+df['SayfaIsmi'] = "SEZON SONU İNDİRİMLERİ"
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+df.to_excel(dosya_adi, index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimleri ve Öne Çıkanlar Sıralama Verilerini Alt Alta Birleştirme
+
+# Excel dosyalarını oku
+df_serbest_alan = pd.read_excel("Sezon Sonu İndirimleri.xlsx")
+df_siralama = pd.read_excel("Öne Çıkanlar Sıralama.xlsx")
+
+# İki DataFrame'i birleştir
+combined_df = pd.concat([df_siralama, df_serbest_alan], ignore_index=True)
+
+# Birleştirilmiş veriyi yeni bir Excel dosyasına kaydet
+combined_df.to_excel("Öne Çıkanlar Sıralama.xlsx", index=False)
+
+#endregion
+
+#region Stabil Ürün Listesi Excel'ini Çoğaltma ve Adını Dev İndirimler Serbest Alan Yapma ve Serbest Alan Olmayanları Satır Olarak Silme
+
+# Dosya adlarını tanımla
+orijinal_dosya = "Stabil Ürün Listesi.xlsx"
+kopya_dosya = "Dev İndirimler Serbest Alan.xlsx"
+
+# Dosyayı kopyala
+shutil.copy(orijinal_dosya, kopya_dosya)
+
+# Kopyalanan dosyayı oku
+df = pd.read_excel(kopya_dosya)
+
+# "Kategori" sütununda "Dev İndirimler Serbest Alan" ifadesini içerenleri tut, diğerlerini sil
+df_filtered = df[df['Kategori'].str.contains("Dev İndirimler Serbest Alan", na=False)]
+
+# Filtrelenmiş veriyi yeni dosyaya kaydet
+df_filtered.to_excel(kopya_dosya, index=False)
+
+#endregion
+
+#region Dev İndirimler Serbest Alan Beden Durumunu Hesaplama
+
+# Veriyi Okuma
+df = pd.read_excel('Dev İndirimler Serbest Alan.xlsx')
+
+# "StokAdedi" Sütununda 0'dan Büyük Olan Değerlerin Adedi
+df['StokAdedi_GT_0'] = df['StokAdedi'].apply(lambda x: 1 if x > 0 else 0)
+stok_adedi_gt_0_adet = df.groupby('UrunAdi')['StokAdedi_GT_0'].sum().reset_index()
+
+# "UrunAdi" Sütunundaki Toplam Yenilenme Adedi
+toplam_yenilenme_adedi = df.groupby('UrunAdi').size().reset_index(name='ToplamYenilenmeAdedi')
+
+# Gereksiz Sütunları Silme
+df = df.drop(['StokAdedi_GT_0'], axis=1, errors='ignore')
+
+
+# Oranı Hesapla ve Yeni Sütunu Ekle
+df = pd.merge(df, stok_adedi_gt_0_adet, on='UrunAdi', how='left')
+df = pd.merge(df, toplam_yenilenme_adedi, on='UrunAdi', how='left')
+df['Beden Durumu'] = df['StokAdedi_GT_0'] / df['ToplamYenilenmeAdedi']
+
+# Gereksiz Sütunları Silme
+df = df.drop(['StokAdedi_GT_0', 'ToplamYenilenmeAdedi'], axis=1, errors='ignore')
+
+# Oranı 100 ile Çarpma
+df['Beden Durumu'] *= 100
+
+# Sonucu Mevcut Excel Dosyasının Üzerine Kaydetme
+df.to_excel('Dev İndirimler Serbest Alan.xlsx', index=False)
+
+#endregion
+
+#region Dev İndirimler Serbest Alan Beden Durumu %50'nin Altında Olanları Silme
+
+# Excel dosyasını oku
+birlesmis_veri = pd.read_excel("Dev İndirimler Serbest Alan.xlsx")
+
+# "Beden Durumu" sütunundaki değeri 50'den küçük olan satırları filtrele
+birlesmis_veri = birlesmis_veri[birlesmis_veri["Beden Durumu"] >= 50]
+
+# İstenmeyen sütunları sil
+silinecek_sutunlar = ["Beden Durumu", "StokAdedi"]
+birlesmis_veri = birlesmis_veri.drop(columns=silinecek_sutunlar, errors='ignore')
+
+# Tekrar eden satırları kaldır
+birlesmis_veri = birlesmis_veri.drop_duplicates()
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+birlesmis_veri.to_excel("Dev İndirimler Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Dev İndirimler Serbest Alan Excel'inde Sadece UrunAdi Sütununu Tutma
+
+# Excel dosyasını okumak
+df = pd.read_excel("Dev İndirimler Serbest Alan.xlsx")
+
+# Tutulacak sütunlar
+columns_to_keep = ["UrunAdi"]
+
+# Diğer sütunları silmek
+df = df[columns_to_keep]
+
+# Düzenlenmiş dosyayı aynı adla kaydetmek
+df.to_excel("Dev İndirimler Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Dev İndirimler Serbest Alan Ürünlerinin Kategorideki Sırasını Bulma
+
+# Dev İndirimler Serbest Alan dosyasını oku
+df = pd.read_excel("Dev İndirimler Serbest Alan.xlsx")
+
+# Ürünlerin sıralanacağı bir liste oluştur
+urun_adlari = df["UrunAdi"].tolist()
+
+# Ürünleri aramak için ürün URL'sine GET isteği gönderme
+product_url = "https://task.haydigiy.com/dev-indirimler-serbest-alan-2/"
+response = requests.get(product_url)
+soup = BeautifulSoup(response.text, "html.parser")
+
+# Ürünleri bulma
+product_items = soup.find_all(class_="product-item")
+
+# Ürün numaralarını bulma
+urun_numaralari = []
+for urun_adi in urun_adlari:
+    for idx, item in enumerate(product_items):
+        if urun_adi in item.text:
+            urun_numaralari.append((urun_adi, idx + 1))  # 1 tabanlı indeks
+            break
+    else:
+        urun_numaralari.append((urun_adi, None))  # Bulunamazsa None
+
+# Excel'e geri yazma
+df['Numara'] = [numara for urun, numara in urun_numaralari]
+df.to_excel("Dev İndirimler Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Dev İndirimler Serbest Alan Ürünlerinin Sırasını Ayarlama
+
+# Excel dosyasını oku
+df = pd.read_excel("Dev İndirimler Serbest Alan.xlsx")
+
+# Numara sütununa göre küçükten büyüğe sıralama
+df_sorted = df.sort_values(by="Numara")
+
+# Numara sütununu güncelle
+df_sorted["Numara"] = range(-9999, -9999 + len(df_sorted), +1)
+
+# Güncellenmiş veriyi Excel dosyasına kaydet
+df_sorted.to_excel("Dev İndirimler Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Dev İndirimler Serbest Alan Excel'inde Ürünlere SayfaIsmi Verme
+
+# Excel dosyasını oku
+dosya_adi = "Dev İndirimler Serbest Alan.xlsx"
+df = pd.read_excel(dosya_adi)
+
+# SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
+df['SayfaIsmi'] = "SEZON SONU İNDİRİMLERİ"
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+df.to_excel(dosya_adi, index=False)
+
+#endregion
+
+#region Dev İndirimler Serbest Alan ve Öne Çıkanlar Sıralama Verilerini Alt Alta Birleştirme
+
+# Excel dosyalarını oku
+df_serbest_alan = pd.read_excel("Dev İndirimler Serbest Alan.xlsx")
+df_siralama = pd.read_excel("Öne Çıkanlar Sıralama.xlsx")
+
+# İki DataFrame'i birleştir
+combined_df = pd.concat([df_siralama, df_serbest_alan], ignore_index=True)
+
+# Birleştirilmiş veriyi yeni bir Excel dosyasına kaydet
+combined_df.to_excel("Öne Çıkanlar Sıralama.xlsx", index=False)
+
+#endregion
+
 #region Stabil Ürün Listesi Excel'ini Çoğaltma ve Adını Yeni Gelenler Sıralama Yapma
 
 # Dosya adlarını tanımla
@@ -3232,6 +3723,11 @@ df_yeni_gelenler = pd.read_excel('Yeni Gelenler Sıralama.xlsx')
 df_merged_yeni_gelenler = pd.merge(df_yeni_gelenler, df_xml, how='left', on='UrunAdi')
 df_merged_yeni_gelenler.to_excel('Yeni Gelenler Sıralama.xlsx', index=False)
 
+# Sezon Sonu Sıralama ile Birleştirme
+df_sezon_sonu = pd.read_excel('Sezon Sonu İndirimleri.xlsx')
+df_merged_sezon_sonu = pd.merge(df_yeni_gelenler, df_xml, how='left', on='UrunAdi')
+df_merged_sezon_sonu.to_excel('Sezon Sonu İndirimleri.xlsx', index=False)
+
 #endregion
 
 #region Yeni Gelenler Sıralama Excel'i Sıralama Kurgusu
@@ -3351,6 +3847,188 @@ with pd.ExcelWriter('Yeni Gelenler Sıralama.xlsx', engine='openpyxl', mode='a',
 
 # Excel dosyalarını oku
 df_serbest_alan = pd.read_excel("Yeni Gelenler Sıralama.xlsx")
+df_siralama = pd.read_excel("Öne Çıkanlar Sıralama.xlsx")
+
+# İki DataFrame'i birleştir
+combined_df = pd.concat([df_siralama, df_serbest_alan], ignore_index=True)
+
+# Birleştirilmiş veriyi yeni bir Excel dosyasına kaydet
+combined_df.to_excel("Öne Çıkanlar Sıralama.xlsx", index=False)
+
+#endregion
+
+#region Stabil Ürün Listesi Excel'ini Çoğaltma ve Adını Yeni Sezon Serbest Alan Yapma ve Serbest Alan Olmayanları Satır Olarak Silme
+
+# Dosya adlarını tanımla
+orijinal_dosya = "Stabil Ürün Listesi.xlsx"
+kopya_dosya = "Yeni Sezon Serbest Alan.xlsx"
+
+# Dosyayı kopyala
+shutil.copy(orijinal_dosya, kopya_dosya)
+
+# Kopyalanan dosyayı oku
+df = pd.read_excel(kopya_dosya)
+
+# "Kategori" sütununda "Yeni Sezon Serbest Alan" ifadesini içerenleri tut, diğerlerini sil
+df_filtered = df[df['Kategori'].str.contains("Yeni Sezon Serbest Alan", na=False)]
+
+# Filtrelenmiş veriyi yeni dosyaya kaydet
+df_filtered.to_excel(kopya_dosya, index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan Beden Durumunu Hesaplama
+
+# Veriyi Okuma
+df = pd.read_excel('Yeni Sezon Serbest Alan.xlsx')
+
+# "StokAdedi" Sütununda 0'dan Büyük Olan Değerlerin Adedi
+df['StokAdedi_GT_0'] = df['StokAdedi'].apply(lambda x: 1 if x > 0 else 0)
+stok_adedi_gt_0_adet = df.groupby('UrunAdi')['StokAdedi_GT_0'].sum().reset_index()
+
+# "UrunAdi" Sütunundaki Toplam Yenilenme Adedi
+toplam_yenilenme_adedi = df.groupby('UrunAdi').size().reset_index(name='ToplamYenilenmeAdedi')
+
+# Gereksiz Sütunları Silme
+df = df.drop(['StokAdedi_GT_0'], axis=1, errors='ignore')
+
+
+# Oranı Hesapla ve Yeni Sütunu Ekle
+df = pd.merge(df, stok_adedi_gt_0_adet, on='UrunAdi', how='left')
+df = pd.merge(df, toplam_yenilenme_adedi, on='UrunAdi', how='left')
+df['Beden Durumu'] = df['StokAdedi_GT_0'] / df['ToplamYenilenmeAdedi']
+
+# Gereksiz Sütunları Silme
+df = df.drop(['StokAdedi_GT_0', 'ToplamYenilenmeAdedi'], axis=1, errors='ignore')
+
+# Oranı 100 ile Çarpma
+df['Beden Durumu'] *= 100
+
+# Sonucu Mevcut Excel Dosyasının Üzerine Kaydetme
+df.to_excel('Yeni Sezon Serbest Alan.xlsx', index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan Beden Durumu %50'nin Altında Olanları Silme
+
+# Excel dosyasını oku
+birlesmis_veri = pd.read_excel("Yeni Sezon Serbest Alan.xlsx")
+
+# "Beden Durumu" sütunundaki değeri 50'den küçük olan satırları filtrele
+birlesmis_veri = birlesmis_veri[birlesmis_veri["Beden Durumu"] >= 50]
+
+# İstenmeyen sütunları sil
+silinecek_sutunlar = ["Beden Durumu", "StokAdedi"]
+birlesmis_veri = birlesmis_veri.drop(columns=silinecek_sutunlar, errors='ignore')
+
+# Tekrar eden satırları kaldır
+birlesmis_veri = birlesmis_veri.drop_duplicates()
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+birlesmis_veri.to_excel("Yeni Sezon Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan Excel'inde Sadece UrunAdi Sütununu Tutma1
+
+# Excel dosyasını okumak
+df = pd.read_excel("Yeni Sezon Serbest Alan.xlsx")
+
+# Tutulacak sütunlar
+columns_to_keep = ["UrunAdi"]
+
+# Diğer sütunları silmek
+df = df[columns_to_keep]
+
+# Düzenlenmiş dosyayı aynı adla kaydetmek
+df.to_excel("Yeni Sezon Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan Ürünlerinin Kategorideki Sırasını Bulma
+
+# Yeni Sezon Serbest Alan dosyasını oku
+df = pd.read_excel("Yeni Sezon Serbest Alan.xlsx")
+
+# Ürünlerin sıralanacağı bir liste oluştur
+urun_adlari = df["UrunAdi"].tolist()
+
+# Ürünleri aramak için ürün URL'sine GET isteği gönderme
+product_url = "https://task.haydigiy.com/dev-indirimler-serbest-alan-2/"
+response = requests.get(product_url)
+soup = BeautifulSoup(response.text, "html.parser")
+
+# Ürünleri bulma
+product_items = soup.find_all(class_="product-item")
+
+# Ürün numaralarını bulma
+urun_numaralari = []
+for urun_adi in urun_adlari:
+    for idx, item in enumerate(product_items):
+        if urun_adi in item.text:
+            urun_numaralari.append((urun_adi, idx + 1))  # 1 tabanlı indeks
+            break
+    else:
+        urun_numaralari.append((urun_adi, None))  # Bulunamazsa None
+
+# Excel'e geri yazma
+df['Numara'] = [numara for urun, numara in urun_numaralari]
+df.to_excel("Yeni Sezon Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan Ürünlerinin Sırasını Ayarlama
+
+# Excel dosyasını oku
+df = pd.read_excel("Yeni Sezon Serbest Alan.xlsx")
+
+# Numara sütununa göre küçükten büyüğe sıralama
+df_sorted = df.sort_values(by="Numara")
+
+# Numara sütununu güncelle
+df_sorted["Numara"] = range(-9999, -9999 + len(df_sorted), +1)
+
+# Güncellenmiş veriyi Excel dosyasına kaydet
+df_sorted.to_excel("Yeni Sezon Serbest Alan.xlsx", index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan Excel'inde Ürünlere SayfaIsmi Verme
+
+# Excel dosyasını oku
+dosya_adi = "Yeni Sezon Serbest Alan.xlsx"
+df = pd.read_excel(dosya_adi)
+
+# SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
+df['SayfaIsmi'] = "YENİ SEZON"
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+df.to_excel(dosya_adi, index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan Excel'ine Ürün ID'lerini Yeniden Çektirme
+
+# Excel dosyalarını oku
+df_yeni_gelenler = pd.read_excel('Yeni Sezon Serbest ALan.xlsx', sheet_name='Sheet1')
+df_stabil_urunler = pd.read_excel('Stabil Ürün Listesi.xlsx')
+
+# ID'yi ilk karşılaştığı değeri baz alarak al
+id_dict = df_stabil_urunler.drop_duplicates(subset='UrunAdi', keep='first').set_index('UrunAdi')['ID'].to_dict()
+
+# Yeni Gelenler Sıralama'ya ID sütunu ekle
+df_yeni_gelenler['ID'] = df_yeni_gelenler['UrunAdi'].map(id_dict)
+
+# Yeni Gelenler Sıralama'ya ID sütununu ekleyip kaydet
+with pd.ExcelWriter('Yeni Sezon Serbest Alan.xlsx', engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+    df_yeni_gelenler.to_excel(writer, sheet_name='Sheet1', index=False)
+
+#endregion
+
+#region Yeni Sezon Serbest Alan ve Öne Çıkanlar Sıralama Verilerini Alt Alta Birleştirme
+
+# Excel dosyalarını oku
+df_serbest_alan = pd.read_excel("Yeni Sezon Serbest Alan.xlsx")
 df_siralama = pd.read_excel("Öne Çıkanlar Sıralama.xlsx")
 
 # İki DataFrame'i birleştir
@@ -3998,50 +4676,253 @@ except Exception as e:
 
 #endregion
 
-#region Dev İndirimler Kategorisini Rastgele Sıralama
+#region Öne Çıkanlar Kategorisine Öne Çıkanlar Serbest Alan Kategorisindeki Ürünleri Ekleme
 
-# order_edit_urls listesi
-order_edit_urls = [
-    "https://task.haydigiy.com/Admin/Category/Sort/374"
-]
+# Giriş yaptıktan sonra belirtilen sayfaya git
+desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+driver.get(desired_page_url)
+
+#Kategori Dahil Alan
+category_select = Select(driver.find_element("id", "SearchInCategoryIds"))
+
+#Kategori ID'si
+category_select.select_by_value("526")
+
+#Seçiniz Kısmının Tikini Kaldırma
+all_remove_buttons = driver.find_elements(By.XPATH, "//span[@class='select2-selection__choice__remove']")
+if len(all_remove_buttons) > 1:
+    second_remove_button = all_remove_buttons[1]
+    second_remove_button.click()
+else:
+    pass
+
+#Ara Butonuna Tıklama
+search_button = driver.find_element(By.ID, "search-products")
+search_button.click()
+
+# Sayfanın en sonuna git
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+# Kategori Güncelleme Tikine Tıklama
+checkbox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "Category_Update")))
+driver.execute_script("arguments[0].click();", checkbox)
+
+# Kategori Güncelleme Alanını Bulma
+category_id_select = driver.find_element(By.ID, "CategoryId")
+
+# Kategori Güncelleme Alanında Kategori ID'si Seçme
+category_id_select = Select(category_id_select)
+category_id_select.select_by_value("26")
+
+# Kategori Güncelleme Alanında Yapılacak İşlem Alanını Bulma
+category_transaction_select = driver.find_element(By.ID, "CategoryTransactionId")
+
+# Kategori Güncelleme Alanında Yapılacak İşlemi Seçme
+category_transaction_select = Select(category_transaction_select)
+category_transaction_select.select_by_value("0")
 
 try:
-    # Her bir link için işlem yapma
-    for url in order_edit_urls:
-        driver.get(url)
+    #Kaydet Butonunu Bulma
+    save_button = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.CLASS_NAME, 'btn-primary'))
+    )
 
-        js_code = """
-        document.getElementById("SortOptionId").value = "99";
-        var event = new Event('change');
-        document.getElementById("SortOptionId").dispatchEvent(event);
-
-        document.getElementById("btnChangeSorting").click();
-        document.getElementById("btnChangeSorting-action-confirmation-submit-button").click();
-        """
-        driver.execute_script(js_code)
-
-        # İşlem tamamlanana kadar bekleyin (maksimum 10 saniye)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "btnChangeSorting")))
-
+    #Kaydet Butonununa Tıklama
+    driver.execute_script("arguments[0].click();", save_button)
 except Exception as e:
-    print("Hata oluştu:", e)
+    print(f"Hata: {e}")
 
+
+#endregion
+
+#region Dev İndirimler Serbest Alanı Dev İndirimlerden Çıkarma
+
+# Giriş yaptıktan sonra belirtilen sayfaya git
+desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+driver.get(desired_page_url)
+
+#Kategori Dahil Alan
+category_select = Select(driver.find_element("id", "SearchInCategoryIds"))
+
+#Kategori ID'si
+category_select.select_by_value("529")
+
+#Seçiniz Kısmının Tikini Kaldırma
+all_remove_buttons = driver.find_elements(By.XPATH, "//span[@class='select2-selection__choice__remove']")
+if len(all_remove_buttons) > 1:
+    second_remove_button = all_remove_buttons[1]
+    second_remove_button.click()
+else:
+    pass
+
+#Ara Butonuna Tıklama
+search_button = driver.find_element(By.ID, "search-products")
+search_button.click()
+
+# Sayfanın en sonuna git
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+# Kategori Güncelleme Tikine Tıklama
+checkbox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "Category_Update")))
+driver.execute_script("arguments[0].click();", checkbox)
+
+# Kategori Güncelleme Alanını Bulma
+category_id_select = driver.find_element(By.ID, "CategoryId")
+
+# Kategori Güncelleme Alanında Kategori ID'si Seçme
+category_id_select = Select(category_id_select)
+category_id_select.select_by_value("374")
+
+# Kategori Güncelleme Alanında Yapılacak İşlem Alanını Bulma
+category_transaction_select = driver.find_element(By.ID, "CategoryTransactionId")
+
+# Kategori Güncelleme Alanında Yapılacak İşlemi Seçme
+category_transaction_select = Select(category_transaction_select)
+category_transaction_select.select_by_value("1")
+
+try:
+    #Kaydet Butonunu Bulma
+    save_button = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.CLASS_NAME, 'btn-primary'))
+    )
+
+    #Kaydet Butonununa Tıklama
+    driver.execute_script("arguments[0].click();", save_button)
+except Exception as e:
+    print(f"Hata: {e}")
+
+#endregion
+
+#region Dev İndirimler Serbest Alanı Dev İndirimlere Ekleme
+
+# Giriş yaptıktan sonra belirtilen sayfaya git
+desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+driver.get(desired_page_url)
+
+#Kategori Dahil Alan
+category_select = Select(driver.find_element("id", "SearchInCategoryIds"))
+
+#Kategori ID'si
+category_select.select_by_value("529")
+
+#Seçiniz Kısmının Tikini Kaldırma
+all_remove_buttons = driver.find_elements(By.XPATH, "//span[@class='select2-selection__choice__remove']")
+if len(all_remove_buttons) > 1:
+    second_remove_button = all_remove_buttons[1]
+    second_remove_button.click()
+else:
+    pass
+
+#Ara Butonuna Tıklama
+search_button = driver.find_element(By.ID, "search-products")
+search_button.click()
+
+# Sayfanın en sonuna git
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+# Kategori Güncelleme Tikine Tıklama
+checkbox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "Category_Update")))
+driver.execute_script("arguments[0].click();", checkbox)
+
+# Kategori Güncelleme Alanını Bulma
+category_id_select = driver.find_element(By.ID, "CategoryId")
+
+# Kategori Güncelleme Alanında Kategori ID'si Seçme
+category_id_select = Select(category_id_select)
+category_id_select.select_by_value("374")
+
+# Kategori Güncelleme Alanında Yapılacak İşlem Alanını Bulma
+category_transaction_select = driver.find_element(By.ID, "CategoryTransactionId")
+
+# Kategori Güncelleme Alanında Yapılacak İşlemi Seçme
+category_transaction_select = Select(category_transaction_select)
+category_transaction_select.select_by_value("0")
+
+try:
+    #Kaydet Butonunu Bulma
+    save_button = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.CLASS_NAME, 'btn-primary'))
+    )
+
+    #Kaydet Butonununa Tıklama
+    driver.execute_script("arguments[0].click();", save_button)
+except Exception as e:
+    print(f"Hata: {e}")
+
+#endregion
+
+#region Yeni Sezon Serbest Alanı Yeni Sezona Ekleme
+
+# Giriş yaptıktan sonra belirtilen sayfaya git
+desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+driver.get(desired_page_url)
+
+#Kategori Dahil Alan
+category_select = Select(driver.find_element("id", "SearchInCategoryIds"))
+
+#Kategori ID'si
+category_select.select_by_value("542")
+
+#Seçiniz Kısmının Tikini Kaldırma
+all_remove_buttons = driver.find_elements(By.XPATH, "//span[@class='select2-selection__choice__remove']")
+if len(all_remove_buttons) > 1:
+    second_remove_button = all_remove_buttons[1]
+    second_remove_button.click()
+else:
+    pass
+
+#Ara Butonuna Tıklama
+search_button = driver.find_element(By.ID, "search-products")
+search_button.click()
+
+# Sayfanın en sonuna git
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+# Kategori Güncelleme Tikine Tıklama
+checkbox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "Category_Update")))
+driver.execute_script("arguments[0].click();", checkbox)
+
+# Kategori Güncelleme Alanını Bulma
+category_id_select = driver.find_element(By.ID, "CategoryId")
+
+# Kategori Güncelleme Alanında Kategori ID'si Seçme
+category_id_select = Select(category_id_select)
+category_id_select.select_by_value("394")
+
+# Kategori Güncelleme Alanında Yapılacak İşlem Alanını Bulma
+category_transaction_select = driver.find_element(By.ID, "CategoryTransactionId")
+
+# Kategori Güncelleme Alanında Yapılacak İşlemi Seçme
+category_transaction_select = Select(category_transaction_select)
+category_transaction_select.select_by_value("0")
+
+try:
+    #Kaydet Butonunu Bulma
+    save_button = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.CLASS_NAME, 'btn-primary'))
+    )
+
+    #Kaydet Butonununa Tıklama
+    driver.execute_script("arguments[0].click();", save_button)
+except Exception as e:
+    print(f"Hata: {e}")
 
 #endregion
 
 #region Öne Çıkanlar Kategorisini Excelle Ürün Yükleyerek Doldurma
 
-desired_url = "https://task.haydigiy.com/admin/importproductxls/edit/26"
+desired_url = "https://task.haydigiy.com/admin/importproductxls/edit/24"
 driver.get(desired_url)
 
 # Yükle Butonunu Bul
 file_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[name="qqfile"]')))
 
-# CalismaAlani Excelini Bul
-file_path = "C:/Users/Panel/Desktop/Yeni/Öne Çıkanlar Yükleme.xlsx"
+# CalismaAlani Excel dosyasının mevcut çalışma dizininde olduğunu varsay
+file_path = os.path.join(os.getcwd(), "Öne Çıkanlar Yükleme.xlsx")
 
 # Dosyayı seç
 file_input.send_keys(file_path)
+
 
 # "İşlemler" düğmesine tıkla
 operations_button = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-success')))
@@ -4052,7 +4933,7 @@ execute_button = WebDriverWait(driver, 10).until(EC.presence_of_element_located(
 execute_button.click()
 
 # 10 saniye bekle
-time.sleep(5)
+time.sleep(10)
 
 def wait_for_element_and_click(driver, by, value, timeout=10):
     try:
@@ -4293,7 +5174,9 @@ dosyalar = [
     "Yeni Gelenler Sıralama.xlsx",
     "Öne Çıkanlar Yükleme.xlsx"
     "Son Liste.xlsx",
-    "yeni_birlesmis__veri.xlsx"
+    "yeni_birlesmis__veri.xlsx",
+    "Yeni Sezon Serbest Alan.xlsx",
+    "Sezon Sonu İndirimleri.xlsx"
 ]
 
 for dosya in dosyalar:
@@ -4602,4 +5485,3 @@ if __name__ == "__main__":
     fetch_and_send_links()
 
 #endregion
-
