@@ -2522,8 +2522,6 @@ for dosya in dosya_listesi:
 
 
 
-
-
 #region Ürün Listesi İndirme ve Gereksiz Sütunları Silme
 
 def get_excel_data(url):
@@ -3338,16 +3336,80 @@ birlesmis_veri.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
 
 #endregion
 
+#region Sezon Sonu İndirimleri İndirim Tutarı Hesaplama
+
+# Excel dosyasını oku
+birlesmis_veri = pd.read_excel("Sezon Sonu İndirimleri.xlsx")
+
+# "ListeFiyati" ve "SatisFiyati" sütunlarındaki verilerden işlem yap
+birlesmis_veri["İndirimTutari"] = (birlesmis_veri["ListeFiyati"] - birlesmis_veri["SatisFiyati"])
+
+# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
+birlesmis_veri.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
+
+#endregion
+
+#region Sezon Sonu İndirimleri Excel'inde Stok Adedi Sütununu Silme
+
+# Excel dosyasını okuma
+df = pd.read_excel('Sezon Sonu İndirimleri.xlsx')
+
+# "StokAdedi" sütununu silme
+df = df.drop(columns=['StokAdedi'])
+
+# Güncellenmiş veriyi Excel dosyasına kaydetme
+df.to_excel('Sezon Sonu İndirimleri.xlsx', index=False)
+#endregion
+
+#region Sezon Sonu İndirimleri Excel'inde Yenilenen Kaldırma
+
+# Excel dosyasını okuma
+df = pd.read_excel('Sezon Sonu İndirimleri.xlsx')
+
+# Tekrarlayan satırları temizleme
+df_benzersiz = df.drop_duplicates()
+
+# Yeni haliyle Excel dosyasını kaydetme
+df_benzersiz.to_excel('Sezon Sonu İndirimleri.xlsx', index=False)
+
+#endregion
+
 #region Sezon Sonu İndirimlerini İndirim Oranına Göre Sıralama
 
 # Excel dosyasını oku
 df = pd.read_excel("Sezon Sonu İndirimleri.xlsx")
 
-# Numara sütununa göre küçükten büyüğe sıralama
-df_sorted = df.sort_values(by="İndirimOrani", ascending=False)
+# İndirim tutarına göre azalan sıralama
+sorted_by_discount_value = df.sort_values(by="İndirimTutari", ascending=False)
+
+# İndirim oranına göre azalan sıralama
+sorted_by_discount_rate = df.sort_values(by="İndirimOrani", ascending=False)
+
+# Sıralama için boş bir liste oluştur
+final_sorted_list = []
+used_indices = set()  # Kullanılan satır indekslerini takip etmek için set
+
+# İndirim tutarı ve indirim oranı sırayla eklenerek final listesi oluşturma
+while len(used_indices) < len(df):
+    if not sorted_by_discount_value.empty:
+        index = sorted_by_discount_value.index[0]
+        if index not in used_indices:
+            final_sorted_list.append(sorted_by_discount_value.iloc[0])
+            used_indices.add(index)
+        sorted_by_discount_value = sorted_by_discount_value.iloc[1:]
+
+    if not sorted_by_discount_rate.empty:
+        index = sorted_by_discount_rate.index[0]
+        if index not in used_indices:
+            final_sorted_list.append(sorted_by_discount_rate.iloc[0])
+            used_indices.add(index)
+        sorted_by_discount_rate = sorted_by_discount_rate.iloc[1:]
+
+# Listeyi DataFrame'e çevir
+final_sorted_df = pd.DataFrame(final_sorted_list)
 
 # Güncellenmiş veriyi Excel dosyasına kaydet
-df_sorted.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
+final_sorted_df.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
 
 #endregion
 
@@ -3364,19 +3426,6 @@ df = df[columns_to_keep]
 
 # Düzenlenmiş dosyayı aynı adla kaydetmek
 df.to_excel("Sezon Sonu İndirimleri.xlsx", index=False)
-
-#endregion
-
-#region Sezon Sonu İndirimleri Excel'inde Yenilenen Kaldırma
-
-# Excel dosyasını okuma (dosyanın adını ve yolunu kendi dosyanızla değiştirin)
-df = pd.read_excel('Sezon Sonu İndirimleri.xlsx')
-
-# Tekrarlayan satırları temizleme
-df_benzersiz = df.drop_duplicates()
-
-# Yeni haliyle Excel dosyasını kaydetme
-df_benzersiz.to_excel('Sezon Sonu İndirimleri.xlsx', index=False)
 
 #endregion
 
@@ -5485,3 +5534,5 @@ if __name__ == "__main__":
     fetch_and_send_links()
 
 #endregion
+
+
