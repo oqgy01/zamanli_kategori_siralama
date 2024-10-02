@@ -2907,8 +2907,8 @@ def contains_any_category(cell_value):
     # Kategori listesinde herhangi birini hücre değerinde arayın
     return any(category in cell_value for category in kategoriler)
 
-# Hem belirli kategorileri hem de "YENİ SEZON" içermeyen satırları filtreleyin
-df_filtered = df[~df['Kategori'].apply(contains_any_category) & df['Kategori'].str.contains("YENİ SEZON", na=False)]
+# Sadece belirtilen kategorileri içermeyen satırları filtreleyin
+df_filtered = df[~df['Kategori'].apply(contains_any_category)]
 
 # Filtrelenmiş DataFrame'i yeni bir Excel dosyasına yazın
 df_filtered.to_excel('Öne Çıkanlar.xlsx', index=False)
@@ -3651,7 +3651,7 @@ shutil.copy(orijinal_dosya, kopya_dosya)
 df = pd.read_excel(kopya_dosya)
 
 # "Kategori" sütununda "Dev İndirimler Serbest Alan" ifadesini içerenleri tut, diğerlerini sil
-df_filtered = df[df['Kategori'].str.contains("YENİ SEZON", na=False)]
+df_filtered = df[df['Kategori'].str.contains("YENİ GELENLER", na=False)]
 
 # Filtrelenmiş veriyi yeni dosyaya kaydet
 df_filtered.to_excel(kopya_dosya, index=False)
@@ -3866,7 +3866,7 @@ dosya_adi = "Yeni Gelenler Sıralama.xlsx"
 df = pd.read_excel(dosya_adi)
 
 # SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
-df['SayfaIsmi'] = "YENİ SEZON"
+df['SayfaIsmi'] = "YENİ GELENLER"
 
 # Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
 df.to_excel(dosya_adi, index=False)
@@ -4049,7 +4049,7 @@ dosya_adi = "Yeni Sezon Serbest Alan.xlsx"
 df = pd.read_excel(dosya_adi)
 
 # SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
-df['SayfaIsmi'] = "YENİ SEZON"
+df['SayfaIsmi'] = "YENİ GELENLER"
 
 # Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
 df.to_excel(dosya_adi, index=False)
@@ -4332,13 +4332,10 @@ for sheet_name, df in birlesmis_veri.items():
     if df.empty:
         continue
     
-    # 'Kategori' sütununda 'YENİ SEZON' içerenleri filtrele
-    yenisezon_df = df[df['Kategori'].str.contains('YENİ SEZON', na=False)]
+    # Tüm verilerden ilk 10 ID'yi al
+    ilk_10_id = df[['ID']].head(10)
     
-    # 'YENİ SEZON' içeren ilk 10 ID'yi al
-    ilk_10_id = yenisezon_df[['ID']].head(10)
-    
-    # Eğer 'YENİ SEZON' içeren ID'ler 10'dan azsa, eksik olanları ekle
+    # Eğer ID'ler 10'dan azsa, eksik olanları ekle
     if len(ilk_10_id) < 10:
         # Diğer ID'leri ekle
         kalan_id = df[~df['ID'].isin(ilk_10_id['ID'])][['ID']].head(10 - len(ilk_10_id))
@@ -4627,7 +4624,7 @@ kategoriler = google_df[['Sıralanacak Kategoriler', 'Kategori ID']]
 
 # Kategori ID'lerini belirli koşullara göre ayarla
 def kategori_id_bul(sayfa_isim):
-    if sayfa_isim == "YENİ SEZON":
+    if sayfa_isim == "YENİ GELENLER":
         return 394
     elif sayfa_isim == "SEZON SONU İNDİRİMLERİ":
         return 374
@@ -5534,5 +5531,4 @@ if __name__ == "__main__":
     fetch_and_send_links()
 
 #endregion
-
 
