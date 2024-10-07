@@ -43,6 +43,7 @@ import re
 import http.client
 import json
 import gc
+from concurrent.futures import ThreadPoolExecutor, as_completed
 warnings.filterwarnings("ignore")
 pd.options.mode.chained_assignment = None
 
@@ -5532,3 +5533,155 @@ if __name__ == "__main__":
 
 #endregion
 
+
+
+#region Kategorilerdeki Ürün Adedini Haydigiy Online'a Gönderme
+
+# Hedef URL
+url = 'https://task.haydigiy.com/iletisim/'
+
+# URL'ye istek gönder
+response = requests.get(url)
+
+# İçeriği parse et
+soup = BeautifulSoup(response.content, 'html.parser')
+
+# Linkleri ve isimleri saklamak için bir liste oluştur
+all_links = []
+
+# Script içeriğini bul
+script = soup.find('script', text=lambda t: t and 'header-menu2' in t)
+
+# Script içeriğinden metni al
+script_content = script.string
+
+# Menüyü oluşturacak HTML parçalarını belirle
+start_index = script_content.index('<div class=header-menu2>')
+end_index = script_content.index('</div>', start_index) + len('</div>')
+menu_html = script_content[start_index:end_index]
+
+# Menü HTML'ini parse et
+menu_soup = BeautifulSoup(menu_html, 'html.parser')
+
+# Linkleri ve isimleri bul
+links = menu_soup.find_all('a')
+
+# Tüm linkleri sakla
+for link in links:
+    href = link.get('href')
+    name = link.text.strip()
+    all_links.append((href, name))
+
+# "header-menu" sınıfındaki linkleri bul
+header_menu_div = soup.find('div', class_='header-menu')
+
+# Tüm linkleri sakla
+header_links = header_menu_div.find_all('a')
+
+for link in header_links:
+    href = link.get('href')
+    name = link.text.strip()
+    all_links.append((href, name))
+
+def fetch_product_count(href, name):
+    # Tam URL oluştur
+    full_url = f'https://task.haydigiy.com{href}'
+    link_response = requests.get(full_url)
+
+    # Sayfanın kaynak HTML'ini al
+    html_content = link_response.text
+
+    # JavaScript içindeki categoryId'yi ayıklamak için bir düzenli ifade (regex) kullanıyoruz
+    match = re.search(r'var categoryId\s*=\s*(\d+);', html_content)
+
+    category_id = match.group(1)  # İlk eşleşmeyi al
+    total_product_count = 0  # Toplam ürün sayısını sıfırla
+    page_number = 1  # Sayfa numarasını başlat
+
+    while True:
+        # AJAX URL'sini oluştur
+        ajax_url = f'https://task.haydigiy.com/Catalog/AjaxCategory/?categoryId={category_id}&pageNumber={page_number}&pageSize=12'
+        ajax_response = requests.get(ajax_url)
+
+        # Sayfanın kaynak HTML'ini al
+        ajax_html_content = ajax_response.text
+        ajax_soup = BeautifulSoup(ajax_html_content, 'html.parser')
+
+        # product-item sınıfındaki öğeleri say
+        product_items = ajax_soup.find_all(class_='product-item')
+        product_count = len(product_items)
+
+        if product_count == 0:
+            break  # Daha fazla sayfaya istek göndermeyi durdur
+
+        total_product_count += product_count  # Toplama ekle
+        page_number += 1  # Sonraki sayfaya geç
+
+    return category_id, total_product_count
+
+# 10'arlı paralel istek gönder
+with ThreadPoolExecutor(max_workers=10) as executor:
+    future_to_link = {executor.submit(fetch_product_count, href, name): (href, name) for href, name in all_links}
+
+    for future in as_completed(future_to_link):
+        href, name = future_to_link[future]
+        category_id, total_product_count = future.result()
+
+        # Verileri GET isteği olarak gönder
+        get_url = f"https://haydigiy.online/haydigiy/numberofitems.php?url={href}&name={name}&categoryid={category_id}&totalproducts={total_product_count}"
+        requests.get(get_url)
+
+
+#endregion
+
+#region Kategorilerin İçindeki Kategorileri Tespit Edip Haydigiy Online'a Gönderme
+
+# İstek göndereceğimiz ana URL
+url = 'https://task.haydigiy.com/iletisim/'
+
+# HTTP isteği gönder
+response = requests.get(url)
+
+# HTML içeriğini parse et
+soup = BeautifulSoup(response.content, 'html.parser')
+
+# class="header-menu-container" sınıfını bul
+header_menu_container = soup.find('div', class_='header-menu-container')
+
+# class="one-level" olan tüm <li> elemanlarını bul
+one_level_items = header_menu_container.find_all('li', class_='one-level')
+
+# Her bir <li> elemanı için href'i al ve o linke istek gönder
+for item in one_level_items:
+    # <a> etiketini bul
+    a_tag = item.find('a')
+    
+    # href değerini al
+    href = a_tag['href']
+    full_url = f"https://task.haydigiy.com{href}"  # Tam URL oluştur
+    
+    # Alt sayfaya istek gönder
+    sub_response = requests.get(full_url)
+    
+    # Alt sayfanın HTML içeriğini parse et
+    sub_soup = BeautifulSoup(sub_response.content, 'html.parser')
+
+    # class="filter-box notfiltered-items" kısmını bul
+    filter_box = sub_soup.find('div', class_='filter-box notfiltered-items')
+
+    # span elemanlarını bul
+    spans = filter_box.find_all('span')
+
+    # Bulunan span elemanlarının metinlerini al ve "Kategori Seçiniz" olmayanları topla
+    categories = [span.get_text().strip() for span in spans if span.get_text().strip() != "Kategori Seçiniz"]
+
+    # Kategorileri virgülle birleştir
+    category_str = ', '.join(categories)
+
+    # İstek gönderilecek URL
+    target_url = f"https://haydigiy.online/haydigiy/numberofcategory.php?link={full_url}&category={category_str}"
+
+    # Veriyi göndermek için istek yap
+    requests.get(target_url)
+
+#endregion
