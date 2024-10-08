@@ -3152,26 +3152,6 @@ df.to_excel('Öne Çıkanlar Serbest Alan.xlsx', index=False)
 
 #endregion
 
-#region Öne Çıkanlar Serbest Alan Beden Durumu %51'nin Altında Olanları Silme
-
-# Excel dosyasını oku
-birlesmis_veri = pd.read_excel("Öne Çıkanlar Serbest Alan.xlsx")
-
-# "Beden Durumu" sütunundaki değeri 50'den küçük olan satırları filtrele
-birlesmis_veri = birlesmis_veri[birlesmis_veri["Beden Durumu"] >= 51]
-
-# İstenmeyen sütunları sil
-silinecek_sutunlar = ["Beden Durumu", "StokAdedi"]
-birlesmis_veri = birlesmis_veri.drop(columns=silinecek_sutunlar, errors='ignore')
-
-# Tekrar eden satırları kaldır
-birlesmis_veri = birlesmis_veri.drop_duplicates()
-
-# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
-birlesmis_veri.to_excel("Öne Çıkanlar Serbest Alan.xlsx", index=False)
-
-#endregion
-
 #region Öne Çıkanlar Serbest Alan Excel'inde Sadece UrunAdi sütununu Tutma
 
 # Excel dosyasını okumak
@@ -3524,26 +3504,6 @@ df['Beden Durumu'] *= 100
 
 # Sonucu Mevcut Excel Dosyasının Üzerine Kaydetme
 df.to_excel('Dev İndirimler Serbest Alan.xlsx', index=False)
-
-#endregion
-
-#region Dev İndirimler Serbest Alan Beden Durumu %50'nin Altında Olanları Silme
-
-# Excel dosyasını oku
-birlesmis_veri = pd.read_excel("Dev İndirimler Serbest Alan.xlsx")
-
-# "Beden Durumu" sütunundaki değeri 50'den küçük olan satırları filtrele
-birlesmis_veri = birlesmis_veri[birlesmis_veri["Beden Durumu"] >= 50]
-
-# İstenmeyen sütunları sil
-silinecek_sutunlar = ["Beden Durumu", "StokAdedi"]
-birlesmis_veri = birlesmis_veri.drop(columns=silinecek_sutunlar, errors='ignore')
-
-# Tekrar eden satırları kaldır
-birlesmis_veri = birlesmis_veri.drop_duplicates()
-
-# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
-birlesmis_veri.to_excel("Dev İndirimler Serbest Alan.xlsx", index=False)
 
 #endregion
 
@@ -3956,26 +3916,6 @@ df['Beden Durumu'] *= 100
 
 # Sonucu Mevcut Excel Dosyasının Üzerine Kaydetme
 df.to_excel('Yeni Sezon Serbest Alan.xlsx', index=False)
-
-#endregion
-
-#region Yeni Sezon Serbest Alan Beden Durumu %50'nin Altında Olanları Silme
-
-# Excel dosyasını oku
-birlesmis_veri = pd.read_excel("Yeni Sezon Serbest Alan.xlsx")
-
-# "Beden Durumu" sütunundaki değeri 50'den küçük olan satırları filtrele
-birlesmis_veri = birlesmis_veri[birlesmis_veri["Beden Durumu"] >= 50]
-
-# İstenmeyen sütunları sil
-silinecek_sutunlar = ["Beden Durumu", "StokAdedi"]
-birlesmis_veri = birlesmis_veri.drop(columns=silinecek_sutunlar, errors='ignore')
-
-# Tekrar eden satırları kaldır
-birlesmis_veri = birlesmis_veri.drop_duplicates()
-
-# Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
-birlesmis_veri.to_excel("Yeni Sezon Serbest Alan.xlsx", index=False)
 
 #endregion
 
