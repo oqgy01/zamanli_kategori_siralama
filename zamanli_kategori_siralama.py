@@ -5141,35 +5141,6 @@ for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Normal Kategorile
     data = res.read()
 
 
-conn.close()
-
-#endregion
-
-#region Gereksiz Excel Dosyalarını Silme
-
-gc.collect()
-
-# Silinecek dosyaların isimlerini tanımla
-dosyalar = [
-    "Stabil Ürün Listesi.xlsx",
-    "Stabil Ürün Listesi Sıralama.xlsx",
-    "Stabil Ürün Listesi Sıralama2.xlsx",
-    "Öne Çıkanlar Sıralama.xlsx",
-    "Öne Çıkanlar.xlsx",
-    "Öne Çıkanlar Serbest Alan.xlsx",
-    "Dev İndirimler Serbest Alan.xlsx",
-    "Yeni Gelenler Sıralama.xlsx",
-    "Öne Çıkanlar Yükleme.xlsx"
-    "Son Liste.xlsx",
-    "yeni_birlesmis__veri.xlsx",
-    "Yeni Sezon Serbest Alan.xlsx",
-    "Sezon Sonu İndirimleri.xlsx"
-]
-
-for dosya in dosyalar:
-    if os.path.exists(dosya):
-        os.remove(dosya)
-
 #endregion
 
 #region Cloudflare Önbellek Temizleme
