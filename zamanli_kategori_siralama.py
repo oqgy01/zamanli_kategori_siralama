@@ -69,7 +69,7 @@ chrome_options.add_argument('--log-level=1')
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])  
 driver = webdriver.Chrome(options=chrome_options)
 
-login_url = "https://task.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
+login_url = "https://www.siparis.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
 driver.get(login_url)
 
 email_input = driver.find_element("id", "EmailOrPhone")
@@ -80,7 +80,7 @@ password_input.send_keys("123456")
 password_input.send_keys(Keys.RETURN)
 
 # Giriş yaptıktan sonra belirtilen sayfaya git
-desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+desired_page_url = "https://www.siparis.haydigiy.com/admin/product/bulkedit/"
 driver.get(desired_page_url)
 
 #Kategori Dahil Alan
@@ -143,7 +143,7 @@ driver.quit()
 
 
 # İstek gönder
-url = "https://task.haydigiy.com/FaprikaXls/MGMMC3/1/"
+url = "https://www.siparis.haydigiy.com/FaprikaXls/MGMMC3/1/"
 response = requests.get(url)
 
 # Excel dosyasını indir
@@ -262,7 +262,7 @@ os.remove("urun_1783.xlsx")
 
 
 # XML'den Ürün Bilgilerini Çekme ve Temizleme
-xml_url = "https://task.haydigiy.com/FaprikaXml/1N8OKV/1/"
+xml_url = "https://www.siparis.haydigiy.com/FaprikaXml/1N8OKV/1/"
 response = requests.get(xml_url)
 xml_data = response.text
 soup = BeautifulSoup(xml_data, 'xml')
@@ -349,7 +349,7 @@ driver.set_window_size(50, 50)
 
 
 # Giriş
-login_url = "https://task.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
+login_url = "https://www.siparis.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
 
 # Verilen URL'ye gitme ve giriş yapma fonksiyonu
 def login(username, password):
@@ -363,7 +363,7 @@ def login(username, password):
 
 # order_edit_urls listesi
 order_edit_urls = [
-        "https://task.haydigiy.com/Admin/Category/Sort/264"
+        "https://www.siparis.haydigiy.com/Admin/Category/Sort/264"
 
 ]
 
@@ -489,7 +489,7 @@ driver.set_window_size(50, 50)
 
 
 # Giriş
-login_url = "https://task.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
+login_url = "https://www.siparis.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
 
 # Verilen URL'ye gitme ve giriş yapma fonksiyonu
 def login(username, password):
@@ -503,7 +503,7 @@ def login(username, password):
 
 # order_edit_urls listesi
 order_edit_urls = [
-        "https://task.haydigiy.com/Admin/Category/Sort/502"
+        "https://www.siparis.haydigiy.com/Admin/Category/Sort/502"
 
 ]
 
@@ -551,11 +551,11 @@ def get_excel_data(url):
         return None
 
 # İlk linkten veriyi al
-url1 = "https://task.haydigiy.com/FaprikaXls/5DO7BZ/1/"
+url1 = "https://www.siparis.haydigiy.com/FaprikaXls/5DO7BZ/1/"
 data1 = get_excel_data(url1)
 
 # İkinci linkten veriyi al
-url2 = "https://task.haydigiy.com/FaprikaXls/5DO7BZ/2/"
+url2 = "https://www.siparis.haydigiy.com/FaprikaXls/5DO7BZ/2/"
 data2 = get_excel_data(url2)
 
 # İki veriyi birleştir
@@ -726,7 +726,7 @@ birlesmis_veri.to_excel("birlesmis__veri.xlsx", index=False)
 
 
 # XML'den Ürün Bilgilerini Çekme ve Temizleme
-xml_url = "https://task.haydigiy.com/FaprikaXml/1YJGSU/1/"
+xml_url = "https://www.siparis.haydigiy.com/FaprikaXml/1YJGSU/1/"
 response = requests.get(xml_url)
 xml_data = response.text
 soup = BeautifulSoup(xml_data, 'xml')
@@ -1200,11 +1200,11 @@ def get_excel_data(url):
         return None
 
 # İlk linkten veriyi al
-url1 = "https://task.haydigiy.com/FaprikaXls/5DO7BZ/1/"
+url1 = "https://www.siparis.haydigiy.com/FaprikaXls/5DO7BZ/1/"
 data1 = get_excel_data(url1)
 
 # İkinci linkten veriyi al
-url2 = "https://task.haydigiy.com/FaprikaXls/5DO7BZ/2/"
+url2 = "https://www.siparis.haydigiy.com/FaprikaXls/5DO7BZ/2/"
 data2 = get_excel_data(url2)
 
 # İki veriyi birleştir
@@ -1374,7 +1374,7 @@ birlesmis_veri.to_excel("birlesmis__veri.xlsx", index=False)
 
 
 # XML'den Ürün Bilgilerini Çekme ve Temizleme
-xml_url = "https://task.haydigiy.com/FaprikaXml/1YJGSU/1/"
+xml_url = "https://www.siparis.haydigiy.com/FaprikaXml/1YJGSU/1/"
 response = requests.get(xml_url)
 xml_data = response.text
 soup = BeautifulSoup(xml_data, 'xml')
@@ -1856,11 +1856,11 @@ def get_excel_data(url):
         return None
 
 # İlk linkten veriyi al
-url1 = "https://task.haydigiy.com/FaprikaXls/V4IYBO/1/"
+url1 = "https://www.siparis.haydigiy.com/FaprikaXls/V4IYBO/1/"
 data1 = get_excel_data(url1)
 
 # İkinci linkten veriyi al
-url2 = "https://task.haydigiy.com/FaprikaXls/V4IYBO/2/"
+url2 = "https://www.siparis.haydigiy.com/FaprikaXls/V4IYBO/2/"
 data2 = get_excel_data(url2)
 
 # İki veriyi birleştir
@@ -2031,7 +2031,7 @@ birlesmis_veri.to_excel("birlesmis__veri.xlsx", index=False)
 
 
 # XML'den Ürün Bilgilerini Çekme ve Temizleme
-xml_url = "https://task.haydigiy.com/FaprikaXml/9RN1ZY/1/"
+xml_url = "https://www.siparis.haydigiy.com/FaprikaXml/9RN1ZY/1/"
 response = requests.get(xml_url)
 xml_data = response.text
 soup = BeautifulSoup(xml_data, 'xml')
@@ -2403,7 +2403,7 @@ excel_dosyasi = "Kategori Sıralama.xlsx"
 birlesmis_veri = pd.read_excel(excel_dosyasi)
 
 # ID sütunundaki her verinin başına belirli bir metni ekleyerek yeni bir sütun oluştur
-birlesmis_veri["ID"] = "https://task.haydigiy.com/admin/product/edit/" + birlesmis_veri["ID"].astype(str)
+birlesmis_veri["ID"] = "https://www.siparis.haydigiy.com/admin/product/edit/" + birlesmis_veri["ID"].astype(str)
 
 # Yeni bir dosya adı
 yeni_dosya_adı = "Kategori Sıralama.xlsx"
@@ -2535,9 +2535,9 @@ def get_excel_data(url):
     else:
         return None
 
-url1 = "https://task.haydigiy.com/FaprikaXls/I5UH6E/1/"
+url1 = "https://www.siparis.haydigiy.com/FaprikaXls/I5UH6E/1/"
 data1 = get_excel_data(url1)
-url2 = "https://task.haydigiy.com/FaprikaXls/I5UH6E/2/"
+url2 = "https://www.siparis.haydigiy.com/FaprikaXls/I5UH6E/2/"
 data2 = get_excel_data(url2)
 
 # İki veriyi birleştir
@@ -2685,7 +2685,7 @@ if not is_file_downloaded_today(filename):
     # ChromeDriver'ı en son sürümüyle otomatik olarak indirip kullan
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
-    login_url = "https://task.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
+    login_url = "https://www.siparis.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
     driver.get(login_url)
 
     # Giriş bilgilerini doldurma
@@ -2697,7 +2697,7 @@ if not is_file_downloaded_today(filename):
     password_input.send_keys(Keys.RETURN)
 
     # Belirttiğiniz sayfaya yönlendirme
-    desired_page_url = "https://task.haydigiy.com/admin/exportorder/edit/149/"
+    desired_page_url = "https://www.siparis.haydigiy.com/admin/exportorder/edit/149/"
     driver.get(desired_page_url)
 
     # Dünün tarihini al
@@ -2726,7 +2726,7 @@ if not is_file_downloaded_today(filename):
 #region Satış Raporunu İndirme
 
 # Excel dosyasının indirileceği URL
-url = "https://task.haydigiy.com/FaprikaOrderXls/Q7DC67/1/"
+url = "https://www.siparis.haydigiy.com/FaprikaOrderXls/Q7DC67/1/"
 filename = "Satış Raporu.xlsx"
 
 # Dosyanın indirilme tarihini kontrol etmek için fonksiyon
@@ -3177,7 +3177,7 @@ df = pd.read_excel("Öne Çıkanlar Serbest Alan.xlsx")
 urun_adlari = df["UrunAdi"].tolist()
 
 # Ürünleri aramak için ürün URL'sine GET isteği gönderme
-product_url = "https://task.haydigiy.com/one-cikanlar-serbest-alan/"
+product_url = "https://www.siparis.haydigiy.com/one-cikanlar-serbest-alan/"
 response = requests.get(product_url)
 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -3532,7 +3532,7 @@ df = pd.read_excel("Dev İndirimler Serbest Alan.xlsx")
 urun_adlari = df["UrunAdi"].tolist()
 
 # Ürünleri aramak için ürün URL'sine GET isteği gönderme
-product_url = "https://task.haydigiy.com/dev-indirimler-serbest-alan-2/"
+product_url = "https://www.siparis.haydigiy.com/dev-indirimler-serbest-alan-2/"
 response = requests.get(product_url)
 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -3703,7 +3703,7 @@ df.to_excel('Yeni Gelenler Sıralama.xlsx', index=False)
 #region Stabil Ürün Listesi - Öne Çıkanlar Sıralama ve Yeni Gelenler Sıralama Excellerine Ürün ID'si Çektirme
 
 # XML URL'si
-xml_url = "https://task.haydigiy.com/FaprikaXml/KM283S/1/"
+xml_url = "https://www.siparis.haydigiy.com/FaprikaXml/KM283S/1/"
 
 # XML'den Ürün Bilgilerini Çekme ve Temizleme
 response = requests.get(xml_url)
@@ -3944,7 +3944,7 @@ df = pd.read_excel("Yeni Sezon Serbest Alan.xlsx")
 urun_adlari = df["UrunAdi"].tolist()
 
 # Ürünleri aramak için ürün URL'sine GET isteği gönderme
-product_url = "https://task.haydigiy.com/dev-indirimler-serbest-alan-2/"
+product_url = "https://www.siparis.haydigiy.com/dev-indirimler-serbest-alan-2/"
 response = requests.get(product_url)
 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -4592,7 +4592,7 @@ son_liste_df.to_excel("Son Liste.xlsx", index=False)
 # ChromeDriver'ı en son sürümüyle otomatik olarak indirip kullan
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
-login_url = "https://task.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
+login_url = "https://www.siparis.haydigiy.com/kullanici-giris/?ReturnUrl=%2Fadmin"
 driver.get(login_url)
 
 email_input = driver.find_element("id", "EmailOrPhone")
@@ -4607,7 +4607,7 @@ password_input.send_keys(Keys.RETURN)
 #region Öne Çıkanlar Kategorisi Boşaltma
 
 # Giriş yaptıktan sonra belirtilen sayfaya git
-desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+desired_page_url = "https://www.siparis.haydigiy.com/admin/product/bulkedit/"
 driver.get(desired_page_url)
 
 #Kategori Dahil Alan
@@ -4666,7 +4666,7 @@ except Exception as e:
 #region Öne Çıkanlar Kategorisine Öne Çıkanlar Serbest Alan Kategorisindeki Ürünleri Ekleme
 
 # Giriş yaptıktan sonra belirtilen sayfaya git
-desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+desired_page_url = "https://www.siparis.haydigiy.com/admin/product/bulkedit/"
 driver.get(desired_page_url)
 
 #Kategori Dahil Alan
@@ -4725,7 +4725,7 @@ except Exception as e:
 #region Dev İndirimler Serbest Alanı Dev İndirimlerden Çıkarma
 
 # Giriş yaptıktan sonra belirtilen sayfaya git
-desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+desired_page_url = "https://www.siparis.haydigiy.com/admin/product/bulkedit/"
 driver.get(desired_page_url)
 
 #Kategori Dahil Alan
@@ -4783,7 +4783,7 @@ except Exception as e:
 #region Dev İndirimler Serbest Alanı Dev İndirimlere Ekleme
 
 # Giriş yaptıktan sonra belirtilen sayfaya git
-desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+desired_page_url = "https://www.siparis.haydigiy.com/admin/product/bulkedit/"
 driver.get(desired_page_url)
 
 #Kategori Dahil Alan
@@ -4841,7 +4841,7 @@ except Exception as e:
 #region Yeni Sezon Serbest Alanı Yeni Sezona Ekleme
 
 # Giriş yaptıktan sonra belirtilen sayfaya git
-desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+desired_page_url = "https://www.siparis.haydigiy.com/admin/product/bulkedit/"
 driver.get(desired_page_url)
 
 #Kategori Dahil Alan
@@ -4898,7 +4898,7 @@ except Exception as e:
 
 #region Öne Çıkanlar Kategorisini Excelle Ürün Yükleyerek Doldurma
 
-desired_url = "https://task.haydigiy.com/admin/importproductxls/edit/24"
+desired_url = "https://www.siparis.haydigiy.com/admin/importproductxls/edit/24"
 driver.get(desired_url)
 
 # Yükle Butonunu Bul
@@ -4993,7 +4993,7 @@ except Exception as e:
 
 # order_edit_urls listesi
 order_edit_urls = [
-        "https://task.haydigiy.com/Admin/Category/Sort/394"
+        "https://www.siparis.haydigiy.com/Admin/Category/Sort/394"
 
 
 ]
@@ -5021,7 +5021,7 @@ except Exception as e:
 #region İç Giyim Ürünlerini Öne Çıkanlardan Çıkarma
 
 # Giriş yaptıktan sonra belirtilen sayfaya git
-desired_page_url = "https://task.haydigiy.com/admin/product/bulkedit/"
+desired_page_url = "https://www.siparis.haydigiy.com/admin/product/bulkedit/"
 driver.get(desired_page_url)
 
 #Kategori Dahil Alan
@@ -5478,7 +5478,7 @@ if __name__ == "__main__":
 #region Kategorilerdeki Ürün Adedini Haydigiy Online'a Gönderme
 
 # Hedef URL
-url = 'https://task.haydigiy.com/iletisim/'
+url = 'https://www.siparis.haydigiy.com/iletisim/'
 
 # URL'ye istek gönder
 response = requests.get(url)
@@ -5525,7 +5525,7 @@ for link in header_links:
 
 def fetch_product_count(href, name):
     # Tam URL oluştur
-    full_url = f'https://task.haydigiy.com{href}'
+    full_url = f'https://www.siparis.haydigiy.com{href}'
     link_response = requests.get(full_url)
 
     # Sayfanın kaynak HTML'ini al
@@ -5540,7 +5540,7 @@ def fetch_product_count(href, name):
 
     while True:
         # AJAX URL'sini oluştur
-        ajax_url = f'https://task.haydigiy.com/Catalog/AjaxCategory/?categoryId={category_id}&pageNumber={page_number}&pageSize=12'
+        ajax_url = f'https://www.siparis.haydigiy.com/Catalog/AjaxCategory/?categoryId={category_id}&pageNumber={page_number}&pageSize=12'
         ajax_response = requests.get(ajax_url)
 
         # Sayfanın kaynak HTML'ini al
@@ -5577,7 +5577,7 @@ with ThreadPoolExecutor(max_workers=10) as executor:
 #region Kategorilerin İçindeki Kategorileri Tespit Edip Haydigiy Online'a Gönderme
 
 # İstek göndereceğimiz ana URL
-url = 'https://task.haydigiy.com/iletisim/'
+url = 'https://www.siparis.haydigiy.com/iletisim/'
 
 # HTTP isteği gönder
 response = requests.get(url)
@@ -5598,7 +5598,7 @@ for item in one_level_items:
     
     # href değerini al
     href = a_tag['href']
-    full_url = f"https://task.haydigiy.com{href}"  # Tam URL oluştur
+    full_url = f"https://www.siparis.haydigiy.com{href}"  # Tam URL oluştur
     
     # Alt sayfaya istek gönder
     sub_response = requests.get(full_url)
