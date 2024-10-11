@@ -4898,7 +4898,7 @@ except Exception as e:
 
 #region Öne Çıkanlar Kategorisini Excelle Ürün Yükleyerek Doldurma
 
-desired_url = "https://task.haydigiy.com/admin/importproductxls/edit/24"
+desired_url = "https://task.haydigiy.com/admin/importproductxls/edit/26"
 driver.get(desired_url)
 
 # Yükle Butonunu Bul
