@@ -47,6 +47,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 warnings.filterwarnings("ignore")
 pd.options.mode.chained_assignment = None
 
+print("güncel")
 
 print("Oturum Açma Başarılı Oldu")
 print(" /﹋\ ")
