@@ -4566,7 +4566,7 @@ kategoriler = google_df[['Sıralanacak Kategoriler', 'Kategori ID']]
 # Kategori ID'lerini belirli koşullara göre ayarla
 def kategori_id_bul(sayfa_isim):
     if sayfa_isim == "YENİ GELENLER":
-        return 394
+        return 347
     elif sayfa_isim == "İNDİRİMLİ ÜRÜNLER":
         return 374
     elif sayfa_isim == "ÖNE ÇIKANLAR":
@@ -4874,7 +4874,7 @@ category_id_select = driver.find_element(By.ID, "CategoryId")
 
 # Kategori Güncelleme Alanında Kategori ID'si Seçme
 category_id_select = Select(category_id_select)
-category_id_select.select_by_value("394")
+category_id_select.select_by_value("347")
 
 # Kategori Güncelleme Alanında Yapılacak İşlem Alanını Bulma
 category_transaction_select = driver.find_element(By.ID, "CategoryTransactionId")
@@ -4993,7 +4993,7 @@ except Exception as e:
 
 # order_edit_urls listesi
 order_edit_urls = [
-        "https://task.haydigiy.com/Admin/Category/Sort/394"
+        "https://task.haydigiy.com/Admin/Category/Sort/347"
 
 
 ]
