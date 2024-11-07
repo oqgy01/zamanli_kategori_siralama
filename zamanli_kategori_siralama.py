@@ -3258,7 +3258,7 @@ shutil.copy(orijinal_dosya, kopya_dosya)
 df = pd.read_excel(kopya_dosya)
 
 # "Kategori" sütununda "Dev İndirimler Serbest Alan" ifadesini içerenleri tut, diğerlerini sil
-df_filtered = df[df['Kategori'].str.contains("İNDİRİMLİ ÜRÜNLER", na=False)]
+df_filtered = df[df['Kategori'].str.contains("EFSANE KASIM İNDİRİMLERİ", na=False)]
 
 # Filtrelenmiş veriyi yeni dosyaya kaydet
 df_filtered.to_excel(kopya_dosya, index=False)
@@ -3435,7 +3435,7 @@ dosya_adi = "Sezon Sonu İndirimleri.xlsx"
 df = pd.read_excel(dosya_adi)
 
 # SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
-df['SayfaIsmi'] = "İNDİRİMLİ ÜRÜNLER"
+df['SayfaIsmi'] = "EFSANE KASIM İNDİRİMLERİ"
 
 # Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
 df.to_excel(dosya_adi, index=False)
@@ -3579,7 +3579,7 @@ dosya_adi = "Dev İndirimler Serbest Alan.xlsx"
 df = pd.read_excel(dosya_adi)
 
 # SayfaIsmi sütununu oluştur ve tüm değerleri "ÖNE ÇIKANLAR" olarak doldur
-df['SayfaIsmi'] = "İNDİRİMLİ ÜRÜNLER"
+df['SayfaIsmi'] = "EFSANE KASIM İNDİRİMLERİ"
 
 # Veriyi mevcut Excel dosyasına kaydet (üzerine yaz)
 df.to_excel(dosya_adi, index=False)
@@ -4568,7 +4568,7 @@ kategoriler = google_df[['Sıralanacak Kategoriler', 'Kategori ID']]
 def kategori_id_bul(sayfa_isim):
     if sayfa_isim == "YENİ GELENLER":
         return 347
-    elif sayfa_isim == "İNDİRİMLİ ÜRÜNLER":
+    elif sayfa_isim == "EFSANE KASIM İNDİRİMLERİ":
         return 374
     elif sayfa_isim == "ÖNE ÇIKANLAR":
         return 26
