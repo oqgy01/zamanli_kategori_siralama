@@ -4952,17 +4952,33 @@ time.sleep(10)
 # Google Sheets URL
 google_sheet_url = "https://docs.google.com/spreadsheets/d/1suzb1TJyZz1xCtUxs1QOP7dHeWTKWkzDul_TaAtb1mc/gviz/tq?tqx=out:csv"
 
+# Belirttiğiniz ek linkler
+additional_links = [
+    "https://task.haydigiy.com/Admin/Category/Sort/374",
+    "https://task.haydigiy.com/Admin/Category/Sort/556",
+    "https://task.haydigiy.com/Admin/Category/Sort/347",
+    "https://task.haydigiy.com/Admin/Category/Sort/26",
+    "https://task.haydigiy.com/Admin/Category/Sort/128"
+]
+
 try:
     # Google Sheets'ten veriyi oku
     google_df = pd.read_csv(google_sheet_url)
     
     # "Sıralama Linkleri" sütunundaki linkleri al
     order_edit_urls = google_df['Sıralama Linkleri'].tolist()
-    
+
+    # Belirttiğiniz ek linkleri listeye ekle
+    order_edit_urls.extend(additional_links)
+
 except requests.exceptions.RequestException as e:
     print("Google Sheets'e erişilemiyor:", e)
+    # Eğer Google Sheets verisi alınamazsa yalnızca ek linklerle devam et
+    order_edit_urls = additional_links
 except pd.errors.EmptyDataError:
     print("Google Sheets'ten veri okunamadı.")
+    # Eğer Google Sheets verisi alınamazsa yalnızca ek linklerle devam et
+    order_edit_urls = additional_links
 
 try:
     # Her bir link için işlem yapma
@@ -4985,37 +5001,6 @@ try:
 except Exception as e:
     print("Hata oluştu:", e)
 
-
-
-#endregion
-
-#region Yeni Gelenler Kategorisinin Sırasını Bozma
-
-
-# order_edit_urls listesi
-order_edit_urls = [
-        "https://task.haydigiy.com/Admin/Category/Sort/347"
-
-
-]
-
-try:
-
-    # Her bir link için işlem yapma
-    for url in order_edit_urls:
-        driver.get(url)
-
-        js_code = """
-        document.getElementById("btnChangeSorting").click();
-        document.getElementById("btnChangeSorting-action-confirmation-submit-button").click();
-        """
-        driver.execute_script(js_code)
-
-        # İşlem tamamlanana kadar bekleyin (maksimum 10 saniye)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "btnChangeSorting")))
-
-except Exception as e:
-    pass
 
 #endregion
 
@@ -5597,3 +5582,4 @@ for item in one_level_items:
     requests.get(target_url)
 
 #endregion
+
