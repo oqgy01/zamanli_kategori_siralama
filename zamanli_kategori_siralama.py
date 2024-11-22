@@ -44,6 +44,7 @@ import http.client
 import json
 import gc
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import concurrent.futures
 warnings.filterwarnings("ignore")
 pd.options.mode.chained_assignment = None
 
@@ -2520,7 +2521,6 @@ for dosya in dosya_listesi:
         print(f"'{dosya}' dosyasını silerken bir hata oluştu: {str(e)}")
 
 #endregion
-
 
 
 
@@ -5067,8 +5067,7 @@ driver.quit()
 
 #region Kategorileri Sıralama
 
-
-# Global tken değişkeni
+# Global token değişkeni
 _auth_token = None
 
 # Token alma fonksiyonu
@@ -5095,18 +5094,13 @@ def get_auth_token():
             raise Exception(f"GİRİŞ BAŞARISIZ: {response.text}")
     return _auth_token
 
-# Token alma işlemi
-token = get_auth_token()
-df = pd.read_excel("Son Liste.xlsx")
-conn = http.client.HTTPSConnection("siparis.haydigiy.com")
-
-
-for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Normal Kategoriler Sıralanıyor"):
-
+# API isteğini paralel olarak gerçekleştiren fonksiyon
+def update_category(row, token):
+    import http.client
+    conn = http.client.HTTPSConnection("siparis.haydigiy.com")
+    
     category_id = row['Kategori ID']
     display_order = row['Numara']
-    product_id = row['ID']
-
     product_id = str(row['ID']).replace(".0", "")
 
     payload = json.dumps({
@@ -5121,10 +5115,18 @@ for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Normal Kategorile
         'Cookie': '.Application.Customer=64684894-1b54-488d-bd59-76b94842df65'
     }
 
-
     conn.request("PUT", f"/adminapi/product/product-categories?productId={product_id}", payload, headers)
-    res = conn.getresponse()
-    data = res.read()
+    conn.getresponse()  # Yanıt okunmuyor çünkü sonuç kontrol edilmiyor.
+
+# Ana kod
+token = get_auth_token()
+df = pd.read_excel("Son Liste.xlsx")
+
+# İstekleri paralel işleme
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    futures = {executor.submit(update_category, row, token): row for _, row in df.iterrows()}
+    for _ in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Normal Kategoriler Sıralanıyor"):
+        pass
 
 
 #endregion
@@ -5582,4 +5584,3 @@ for item in one_level_items:
     requests.get(target_url)
 
 #endregion
-
